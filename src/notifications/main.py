@@ -11,6 +11,7 @@ settings = get_settings()
 
 
 def create_app() -> FastAPI:
+    """Фабрика по созданию приложения FastAPI."""
     container = Container()
     container.config.from_pydantic(settings=settings)
     container = override_providers(container)
