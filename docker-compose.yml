@@ -1,0 +1,39 @@
+version: '3.9'
+
+services:
+  server:
+    restart: always
+    build:
+      context: .
+      dockerfile: Dockerfile
+    env_file:
+      - $ENV
+    expose:
+      - $NN_SERVER_PORT
+    volumes:
+      - .:/app
+    command: >
+      sh -c "cd /app/src
+      && python -m uvicorn notifications.main:create_app --reload --host 0.0.0.0 --port $NN_SERVER_PORT"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.notifications_api.rule=Host(`api-notifications.localhost`,`traefik`)"
+      - "traefik.http.routers.notifications_api.entrypoints=web"
+
+  traefik:
+    image: traefik:v2.8
+    command:
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+      - "--tracing.jaeger=true"
+      - "--tracing.jaeger.samplingParam=0"
+      - "--tracing.jaeger.traceContextHeaderName=X-Request-Id"
+    ports:
+      - "8011:80"
+      - "8084:8080"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+    depends_on:
+      - server
