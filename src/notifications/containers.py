@@ -20,7 +20,7 @@ class Container(containers.DeclarativeContainer):
 
     email_client = providers.Singleton(
         ConsoleClient,
-        stream=sys.stdout,
+        stream=providers.Object(sys.stdout),
     )
 
 
