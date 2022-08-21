@@ -5,6 +5,7 @@ from fastapi.responses import ORJSONResponse
 
 from notifications.core.config import get_settings
 
+from .api.urls import api_router
 from .containers import Container, override_providers
 
 settings = get_settings()
@@ -41,4 +42,5 @@ def create_app() -> FastAPI:
         logging.info("Cleanup resources")
 
     app.container = container
+    app.include_router(api_router)
     return app
