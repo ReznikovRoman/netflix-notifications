@@ -35,6 +35,38 @@ jobs:
 
   test:
     runs-on: ubuntu-latest
+    services:
+      db:
+        image: postgres:14.2-alpine
+        env:
+          POSTGRES_USER: github
+          POSTGRES_PASSWORD: ci_pass
+          POSTGRES_DB: test_db
+        options: >-
+          --health-cmd "pg_isready -d test_db -U github"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+      redis-primary:
+        image: redis/redis-stack-server:7.0.0-RC5
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      redis-celery:
+        image: redis/redis-stack-server:7.0.0-RC5
+        ports:
+          - 6380:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     steps:
       - uses: actions/checkout@v3
       - name: Set up Python 3.10
@@ -63,6 +95,18 @@ jobs:
           export NN_SERVER_NAME=localhost
           export NN_SERVER_HOSTS=http://api-notifications.localhost:8011
           export NAA_SECRET_KEY=changeme
+          export NN_DB_HOST=localhost
+          export NN_DB_PORT=5432
+          export NN_DB_NAME=test_db
+          export NN_DB_USER=github
+          export NN_DB_PASSWORD=ci_pass
+          export NN_REDIS_DECODE_RESPONSES=1
+          export NN_REDIS_PORT=6379
+          export NN_REDIS_URL=redis://localhost:6379/0
+          export NN_REDIS_OM_URL=redis://@localhost:6379
+          export NN_CELERY_BROKER_URL=redis://localhost:6380/0
+          export NN_CELERY_RESULT_BACKEND=redis://localhost:6380/0
+          export NN_FLOWER_PORT=8888
           export NN_USE_STUBS=1
           export NN_TESTING=1
           export NN_CI=1
