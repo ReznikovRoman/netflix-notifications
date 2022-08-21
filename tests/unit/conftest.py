@@ -13,9 +13,6 @@ if TYPE_CHECKING:
     from asyncio import AbstractEventLoop
 
 
-pytest_plugins = [
-    "celery.contrib.pytest",
-]
 pytestmark = [pytest.mark.asyncio]
 
 
