@@ -1,11 +1,12 @@
 import logging
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.responses import ORJSONResponse
 
 from notifications.core.config import get_settings
 
 from .api.urls import api_router
+from .common.exceptions import NetflixNotificationsError
 from .containers import Container, override_providers
 
 settings = get_settings()
@@ -29,6 +30,10 @@ def create_app() -> FastAPI:
         default_response_class=ORJSONResponse,
         debug=settings.DEBUG,
     )
+
+    @app.exception_handler(NetflixNotificationsError)
+    async def project_exception_handler(_: Request, exc: NetflixNotificationsError):
+        return ORJSONResponse(status_code=exc.status_code, content=exc.to_dict())
 
     @app.on_event("startup")
     async def startup():

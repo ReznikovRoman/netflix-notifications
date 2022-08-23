@@ -328,7 +328,6 @@ multidict==6.0.2 \
     --hash=sha256:feba80698173761cddd814fa22e88b0661e98cb810f9f986c54aa34d281e4937 \
     --hash=sha256:feea820722e69451743a3d56ad74948b68bf456984d63c1a92e8347b7b88452d
     # via
-    #   -c requirements.txt
     #   aiohttp
     #   yarl
 packaging==21.3 \
@@ -587,6 +586,4 @@ yarl==1.7.2 \
     --hash=sha256:fc4dd8b01a8112809e6b636b00f487846956402834a7fd59d46d4f4267181c41 \
     --hash=sha256:fce78593346c014d0d986b7ebc80d782b7f5e19843ca798ed62f8e3ba8728576 \
     --hash=sha256:fd547ec596d90c8676e369dd8a581a21227fe9b4ad37d0dc7feb4ccf544c2d59
-    # via
-    #   -c requirements.txt
-    #   aiohttp
+    # via aiohttp
