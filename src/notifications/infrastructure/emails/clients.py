@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import ClassVar, Protocol, Sequence
 
-from notifications.helpers import BaseModel
+from notifications.types import BaseModel
 
 
 class IStream(Protocol):

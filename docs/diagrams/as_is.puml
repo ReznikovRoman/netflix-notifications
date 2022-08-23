@@ -1,0 +1,54 @@
+@startuml
+!theme mars
+skinparam componentStyle uml2
+skinparam defaultFontName Segoe UI
+skinparam backgroundColor motivation
+
+title Netflix [AS IS]
+
+agent "Client" as base_client
+
+frame NetflixAdmin {
+    cloud "Nginx" as nginx_admin
+    component "Admin" as admin_admin
+    database "Postgres" as postgres_admin
+
+    nginx_admin <-down-> admin_admin
+    admin_admin <-down-> postgres_admin
+}
+
+frame NetflixETL {
+    database "Elasticsearch" as elasticsearch_etl
+    component "ETL Pipeline" as etl_pipeline
+
+    etl_pipeline <-down- postgres_admin
+    etl_pipeline -down-> elasticsearch_etl
+}
+
+frame NetflixMoviesAPI {
+    cloud "Traefik" as traefik_movies
+    component "API" as api_movies
+    database "Redis" as redis_movies
+
+    api_movies <-up-> traefik_movies
+    api_movies <-down- elasticsearch_etl
+    api_movies <-down-> redis_movies: "Кэширование"
+}
+
+frame NetflixAuthAPI {
+    cloud "Traefik" as traefik_auth
+    cloud "auth0" as auth0_auth
+    component "API" as api_auth
+    database "Postgres" as postgres_auth
+    database "Redis" as redis_auth
+
+    api_auth <-up-> traefik_auth
+    api_auth <-up-> auth0_auth: "Защита приватного АПИ ролей"
+    api_auth <-down-> postgres_auth
+    api_auth <-down-> redis_auth: "Хранение использованных JWT"
+}
+
+base_client <-down-> nginx_admin: "Управление фильмами, актерами и жанрами"
+base_client <-down-> traefik_movies: "Основное АПИ онлайн-кинотеатра"
+base_client <-down-> traefik_auth: "Работа с пользователями и управление ролями"
+@enduml

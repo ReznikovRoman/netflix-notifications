@@ -1,29 +1,26 @@
-import dataclasses
+import asyncio
+import re
+from typing import Any, Coroutine, Iterator
+
+sentinel: Any = object()
+
+SLUG_REGEX = re.compile(r"^[-\w]+$")
 
 
-class _ModelMeta(type):
-    """Мета-класс для создания датаклассов."""
+def delay_tasks(*tasks: Coroutine) -> None:
+    """Вспомогательная функция для запуска задач в фоне.
 
-    _dataclass_options = {
-        "init": True,
-        "repr": True,
-        "eq": True,
-        "order": True,
-        "unsafe_hash": True,
-        "frozen": True,
-        "kw_only": True,
-        "match_args": True,
-        "slots": True,
-    }
-    _convert_to_dataclass = dataclasses.dataclass(**_dataclass_options)
-
-    def __new__(cls, name, bases, namespace):  # noqa: N805
-        obj = super().__new__(cls, name, bases, namespace)
-        if "__slots__" in namespace:
-            # Пересоздание класса внутри dataclasses.dataclass
-            return obj
-        return cls._convert_to_dataclass(obj)
+    Для надежной работы нужно сохранять ссылку на функцию.
+    https://docs.python.org/3/library/asyncio-task.html#creating-tasks
+    """
+    background_tasks = set()
+    for _task in tasks:
+        task = asyncio.create_task(_task)
+        background_tasks.add(task)
+        task.add_done_callback(background_tasks.discard)
 
 
-class BaseModel(metaclass=_ModelMeta):
-    """Базовый класс модели для тех сущностей, у которых нет поля `id`."""
+def resolve_callables(mapping: dict) -> Iterator[tuple[Any, Any]]:
+    """Генерация пар ключ-значение из `mapping`, где значения могут быть callable объектами."""
+    for key, value in mapping.items():
+        yield key, value() if callable(value) else value

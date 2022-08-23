@@ -66,6 +66,7 @@ class Settings(BaseSettings):
     REDIS_URL: str
     REDIS_OM_URL: str
     REDIS_CELERY_URL: str = Field(..., env="NN_CELERY_BROKER_URL")
+    REDIS_KEY_PREFIX: str = Field("notifications")
 
     # Celery
     CELERY_BROKER_URL: str
