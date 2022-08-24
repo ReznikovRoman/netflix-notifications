@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import ClassVar, Protocol, Sequence
 
-from notifications.types import BaseModel
+from notifications.types import BaseModel, INotification
 
 
 class IStream(Protocol):
@@ -18,13 +18,13 @@ class EmailMessageDetail(BaseModel):
     """Информация о письме."""
 
     subject: str
-    message: str
+    content: str
     recipient_list: Sequence[str]
     from_email: str | None = None
 
     def __str__(self) -> str:
         message_repr = (
-            f"<Subject: {self.subject}>; <To: {self.recipient_list}>; <Message: {self.message}>\n"
+            f"<Subject: {self.subject}>; <To: {self.recipient_list}>; <Message: {self.content}>\n"
         )
         return message_repr
 
@@ -35,7 +35,7 @@ class BaseEmailClient(ABC):
     DEFAULT_FROM_EMAIL: ClassVar[str]
 
     @abstractmethod
-    def send_messages(self, messages_details: Sequence[EmailMessageDetail], /) -> int:
+    def send_messages(self, messages_details: Sequence[INotification], /) -> int:
         """Отправка одного или нескольких писем.
 
         Returns:
