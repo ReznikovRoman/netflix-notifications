@@ -1,4 +1,5 @@
 import dataclasses
+from typing import Protocol, Sequence
 
 seconds = int
 
@@ -29,3 +30,11 @@ class _ModelMeta(type):
 
 class BaseModel(metaclass=_ModelMeta):
     """Базовый класс модели для тех сущностей, у которых нет поля `id`."""
+
+
+class INotification(Protocol):
+    """Уведомление."""
+
+    subject: str
+    content: str
+    recipient_list: Sequence[str]

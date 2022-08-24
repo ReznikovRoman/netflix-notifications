@@ -30,7 +30,7 @@ class TemplateRepository:
         try:
             return await self.model.find((self.model.slug == slug)).first()
         except RedisNotFoundError:
-            raise NotFoundError()
+            raise NotFoundError(f"There is no template with slug <{slug}>.")
 
     async def get_all(self) -> list[Template]:
         """Получение списка сохраненных шаблонов уведомлений."""

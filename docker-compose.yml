@@ -16,7 +16,7 @@ services:
       - .:/app
     command: >
       sh -c "cd /app/src
-      && python -m uvicorn notifications.main:create_app --reload --host 0.0.0.0 --port $NN_SERVER_PORT"
+      && python -m uvicorn notifications:app --reload --host 0.0.0.0 --port $NN_SERVER_PORT"
     depends_on:
       redis-primary:
         condition: service_healthy
@@ -67,14 +67,16 @@ services:
     restart: always
     env_file:
       - ${ENV}
+    environment:
+      - REDIS_OM_URL=${NN_REDIS_OM_URL}
     build: .
     command: >
       bash -c "cd /app/src/
-      && celery -A notifications worker -Q default,celery,emails,urgent_notifications -l info -c 2 -n default_worker"
+      && celery -A notifications.celery_app worker -Q default,celery,emails,urgent_notifications -l info -c 2 -n default_worker"
     volumes:
       - .:/app
     healthcheck:
-      test: cd /app/src && celery -A notifications inspect ping
+      test: cd /app/src && celery -A notifications.celery_app inspect ping
       interval: 10s
       timeout: 10s
       retries: 3
@@ -91,13 +93,15 @@ services:
     restart: always
     env_file:
       - ${ENV}
+    environment:
+      - REDIS_OM_URL=${NN_REDIS_OM_URL}
     command: >
       bash -c "cd /app/src/
-      && celery -A notifications worker -Q urgent_notifications -l info -c 1 -n high_priority"
+      && celery -A notifications.celery_app worker -Q urgent_notifications -l info -c 1 -n high_priority"
     volumes:
       - .:/app
     healthcheck:
-      test: cd /app/src && celery -A notifications inspect ping
+      test: cd /app/src && celery -A notifications.celery_app inspect ping
       interval: 10s
       timeout: 10s
       retries: 3
@@ -114,13 +118,15 @@ services:
     restart: always
     env_file:
       - ${ENV}
+    environment:
+      - REDIS_OM_URL=${NN_REDIS_OM_URL}
     command: >
       bash -c "cd /app/src/
-      && celery -A notifications worker -Q emails,urgent_notifications -l info -c 1 -n low_priority"
+      && celery -A notifications.celery_app worker -Q emails,urgent_notifications -l info -c 1 -n low_priority"
     volumes:
       - .:/app
     healthcheck:
-      test: cd /app/src && celery -A notifications inspect ping
+      test: cd /app/src && celery -A notifications.celery_app inspect ping
       interval: 10s
       timeout: 10s
       retries: 3
@@ -136,12 +142,14 @@ services:
     restart: on-failure
     env_file:
       - ${ENV}
+    environment:
+      - REDIS_OM_URL=${NN_REDIS_OM_URL}
     build: .
     volumes:
       - .:/app
     command: >
       bash -c "cd /app/src/
-      && celery -A notifications beat -l info --pidfile= --scheduler celery_sqlalchemy_scheduler.schedulers:DatabaseScheduler"
+      && celery -A notifications.celery_app beat -l info --pidfile= --scheduler celery_sqlalchemy_scheduler.schedulers:DatabaseScheduler"
     depends_on:
       redis-celery:
         condition: service_healthy

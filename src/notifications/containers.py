@@ -3,7 +3,7 @@ import sys
 from dependency_injector import containers, providers
 
 from notifications.core.logging import configure_logger
-from notifications.domain import templates
+from notifications.domain import messages, templates
 from notifications.infrastructure.db import redis, repositories
 from notifications.infrastructure.emails.clients import ConsoleClient
 from notifications.infrastructure.emails.stubs import StreamStub
@@ -12,7 +12,11 @@ from notifications.infrastructure.emails.stubs import StreamStub
 class Container(containers.DeclarativeContainer):
     """Контейнер с зависимостями."""
 
-    wiring_config = containers.WiringConfiguration()
+    wiring_config = containers.WiringConfiguration(
+        modules=[
+            "notifications.domain.messages.tasks",
+        ],
+    )
 
     config = providers.Configuration()
 
@@ -45,6 +49,20 @@ class Container(containers.DeclarativeContainer):
     template_service = providers.Singleton(
         templates.TemplateService,
         template_repository=template_repository,
+    )
+
+    # Domain -> Messages
+
+    email_notification_service = providers.Singleton(
+        messages.EmailNotificationService,
+        email_client=email_client,
+        template_service=template_service,
+    )
+
+    notification_dispatcher_service = providers.Singleton(
+        messages.NotificationDispatcherService,
+        email_service=email_notification_service,
+        template_service=template_service,
     )
 
 
