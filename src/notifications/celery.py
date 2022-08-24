@@ -20,29 +20,6 @@ settings = get_settings()
 redis_client = redis.Redis.from_url(settings.REDIS_CELERY_URL)
 
 
-celery_config = {
-    "broker_url": settings.CELERY_BROKER_URL,
-    "result_backend": settings.CELERY_RESULT_BACKEND,
-    "beat_dburi": settings.DB_URL,
-}
-app = Celery(
-    main="notifications",
-    task_cls="notifications.celery:Task",
-)
-app.config_from_object(obj=CelerySettings)
-app.autodiscover_tasks(
-    packages=[
-        "notifications.domain.messages",
-    ],
-)
-app.conf.update(celery_config)
-
-
-# CELERY PERIODIC TASKS
-# https://docs.celeryproject.org/en/stable/userguide/periodic-tasks.html
-app.conf.beat_schedule = {}
-
-
 class Task(_Task):
     """Переопределенная задача `celery.Task` для установки лока."""
 
@@ -95,3 +72,29 @@ class Task(_Task):
         if self.acquire_lock(lock_key, force=force):
             return super().apply_async(args=args, kwargs=kwargs, **options)
         return None
+
+
+def create_celery() -> Celery:
+    """Создание приложения Celery."""
+    celery_config = {
+        "broker_url": settings.CELERY_BROKER_URL,
+        "result_backend": settings.CELERY_RESULT_BACKEND,
+        "beat_dburi": settings.DB_URL,
+    }
+    app = Celery(
+        main="notifications",
+        task_cls="notifications.celery:Task",
+    )
+    app.config_from_object(obj=CelerySettings)
+    app.autodiscover_tasks(
+        packages=[
+            "notifications.domain.messages",
+        ],
+    )
+    app.conf.update(celery_config)
+
+    # CELERY PERIODIC TASKS
+    # https://docs.celeryproject.org/en/stable/userguide/periodic-tasks.html
+    app.conf.beat_schedule = {}
+
+    return app
