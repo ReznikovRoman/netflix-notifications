@@ -29,8 +29,12 @@ app = Celery(
     main="notifications",
     task_cls="notifications.celery:Task",
 )
-app.config_from_object(obj=CelerySettings, namespace="CELERY")
-app.autodiscover_tasks()
+app.config_from_object(obj=CelerySettings)
+app.autodiscover_tasks(
+    packages=[
+        "notifications.domain.messages",
+    ],
+)
 app.conf.update(celery_config)
 
 

@@ -18,23 +18,23 @@ class EnvConfig(BaseSettings.Config):
 class CelerySettings:
     """Настройки Celery."""
 
-    CELERY_TIMEZONE = "Europe/Moscow"
-    CELERY_ACCEPT_CONTENT = ["application/json"]
-    CELERY_RESULT_SERIALIZER = "json"
-    CELERY_TASK_SERIALIZER = "json"
-    CELERY_TASK_RESULT_EXPIRES = 10 * 60
-    CELERY_TASK_TIME_LIMIT = 8 * 60 * 60  # 8 hours
-    CELERY_TASK_SOFT_TIME_LIMIT = 10 * 60 * 60  # 10 hours
-    CELERY_QUEUES = (
+    TIMEZONE = "Europe/Moscow"
+    ACCEPT_CONTENT = ["application/json"]
+    RESULT_SERIALIZER = "json"
+    TASK_SERIALIZER = "json"
+    RESULT_EXPIRES = 10 * 60
+    TASK_TIME_LIMIT = 8 * 60 * 60  # 8 hours
+    TASK_SOFT_TIME_LIMIT = 10 * 60 * 60  # 10 hours
+    TASK_QUEUES = (
         Queue(name="default", exchange=Exchange("default"), routing_key="default"),
         Queue(name="celery"),
         Queue(name="emails"),
         Queue(name="urgent_notifications"),
     )
-    CELERY_CREATE_MISSING_QUEUES = True
-    CELERY_DEFAULT_QUEUE = "default"
-    CELERY_DEFAULT_EXCHANGE = "default"
-    CELERY_DEFAULT_ROUTING_KEY = "default"
+    TASK_CREATE_MISSING_QUEUES = True
+    TASK_DEFAULT_QUEUE = "default"
+    TASK_DEFAULT_EXCHANGE = "default"
+    TASK_DEFAULT_ROUTING_KEY = "default"
 
 
 class Settings(BaseSettings):
