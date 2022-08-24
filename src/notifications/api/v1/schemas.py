@@ -3,6 +3,7 @@ from typing import Any
 from pydantic import BaseModel, EmailStr, Field, root_validator
 
 from notifications.domain.messages.enums import NotificationPriority, NotificationType
+from notifications.domain.messages.types import Queue
 
 from .exceptions import MissingContentError
 
@@ -34,3 +35,10 @@ class NotificationIn(BaseModel):
         if content is None:
             raise MissingContentError()
         return values
+
+
+class NotificationShortDetails(BaseModel):
+    """Короткая информация об уведомлении."""
+
+    notification_id: str
+    queue: Queue

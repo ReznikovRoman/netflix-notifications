@@ -1,4 +1,4 @@
-from notifications.api.v1.schemas import NotificationIn
+from notifications.api.v1.schemas import NotificationIn, NotificationShortDetails
 from notifications.domain.templates import TemplateService
 
 from .enums import NotificationPriority, NotificationType
@@ -17,7 +17,7 @@ class NotificationDispatcherService:
         assert isinstance(template_service, TemplateService)
         self._template_service = template_service
 
-    async def dispatch_notification(self, notification: NotificationIn, /) -> Queue:
+    async def dispatch_notification(self, notification: NotificationIn, /) -> NotificationShortDetails:
         """Перенаправление уведомления в очередь для дальнейшей отправки пользователю."""
         from .tasks import send_email
 
@@ -27,8 +27,10 @@ class NotificationDispatcherService:
         queue = self._select_queue_by_priority(notification.priority)
         match notification_type:
             case NotificationType.EMAIL:
-                send_email.apply_async(args=[self._build_payload(notification)], queue=queue)
-        return queue
+                result = send_email.apply_async(args=[self._build_payload(notification)], queue=queue)
+            case _:
+                raise InvalidNotificationTypeError(message=f"Invalid notification type <{notification_type}>")
+        return NotificationShortDetails(notification_id=result.id, queue=queue)
 
     async def check_if_template_exists(self, template_slug: str, /) -> None:
         """Проверка существования шаблона с данным слагом."""
