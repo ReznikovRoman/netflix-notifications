@@ -7,6 +7,8 @@ from notifications.domain import messages, templates
 from notifications.infrastructure.db import postgres, redis, repositories
 from notifications.infrastructure.emails.clients import ConsoleClient
 from notifications.infrastructure.emails.stubs import StreamStub
+from notifications.integrations.auth.stubs import NetflixAuthClientStub
+from notifications.integrations.ugc.stubs import NetflixUgcClientStub
 
 
 class Container(containers.DeclarativeContainer):
@@ -44,6 +46,20 @@ class Container(containers.DeclarativeContainer):
         stream=providers.Object(sys.stdout),
     )
 
+    # Integrations -> Netflix Auth
+
+    auth_client = providers.Singleton(
+        # TODO [Дипломный проект]: После реализации всех клиентов АПИ тут будет использоваться настоящий клиент
+        NetflixAuthClientStub,
+    )
+
+    # Integrations -> Netflix UGC
+
+    ugc_client = providers.Singleton(
+        # TODO [Дипломный проект]: После реализации всех клиентов АПИ тут будет использоваться настоящий клиент
+        NetflixUgcClientStub,
+    )
+
     # Domain -> Templates
 
     template_repository = providers.Singleton(
@@ -76,6 +92,8 @@ def override_providers(container: Container) -> Container:
     if not container.config.USE_STUBS():
         return container
     container.email_client.override(providers.Singleton(ConsoleClient, stream=StreamStub))
+    container.auth_client.override(providers.Singleton(NetflixAuthClientStub))
+    container.ugc_client.override(providers.Singleton(NetflixUgcClientStub))
     return container
 
 
