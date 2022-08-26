@@ -1,14 +1,22 @@
+from __future__ import annotations
+
 import sys
+from typing import TYPE_CHECKING
 
 from dependency_injector import containers, providers
 
 from notifications.core.logging import configure_logger
-from notifications.domain import messages, templates
+from notifications.domain import messages, periodic_tasks, templates
 from notifications.infrastructure.db import postgres, redis, repositories
 from notifications.infrastructure.emails.clients import ConsoleClient
 from notifications.infrastructure.emails.stubs import StreamStub
 from notifications.integrations.auth.stubs import NetflixAuthClientStub
 from notifications.integrations.ugc.stubs import NetflixUgcClientStub
+
+from .helpers import sentinel
+
+if TYPE_CHECKING:
+    from celery import Celery
 
 
 class Container(containers.DeclarativeContainer):
@@ -17,6 +25,7 @@ class Container(containers.DeclarativeContainer):
     wiring_config = containers.WiringConfiguration(
         modules=[
             "notifications.domain.messages.tasks",
+            "notifications.domain.periodic_tasks.tasks",
         ],
     )
 
@@ -86,6 +95,23 @@ class Container(containers.DeclarativeContainer):
         template_service=template_service,
     )
 
+    # Domain -> Periodic Tasks
+
+    task_repository = providers.Factory(
+        periodic_tasks.TaskRepository,
+        celery_app=sentinel,
+        session_factory=db.provided.session,
+    )
+
+    task_service = providers.Factory(
+        periodic_tasks.TaskService,
+        task_repository=task_repository,
+        email_service=email_notification_service,
+        template_service=template_service,
+        auth_client=auth_client,
+        ugc_client=ugc_client,
+    )
+
 
 def override_providers(container: Container) -> Container:
     """Перезаписывание провайдеров с помощью стабов."""
@@ -94,6 +120,11 @@ def override_providers(container: Container) -> Container:
     container.email_client.override(providers.Singleton(ConsoleClient, stream=StreamStub))
     container.auth_client.override(providers.Singleton(NetflixAuthClientStub))
     container.ugc_client.override(providers.Singleton(NetflixUgcClientStub))
+    return container
+
+
+def inject_celery_app(container: Container, celery_app: Celery) -> Container:
+    container.task_repository.add_kwargs(celery_app=celery_app)
     return container
 
 
