@@ -19,3 +19,4 @@ per-file-ignores =
     # First argument of a method should be named 'self'
     */core/**.py:N805
     */api/v1/schemas.py:N805
+    */domain/periodic_tasks/types.py:N805
