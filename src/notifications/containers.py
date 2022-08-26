@@ -4,7 +4,7 @@ from dependency_injector import containers, providers
 
 from notifications.core.logging import configure_logger
 from notifications.domain import messages, templates
-from notifications.infrastructure.db import redis, repositories
+from notifications.infrastructure.db import postgres, redis, repositories
 from notifications.infrastructure.emails.clients import ConsoleClient
 from notifications.infrastructure.emails.stubs import StreamStub
 
@@ -23,6 +23,11 @@ class Container(containers.DeclarativeContainer):
     logging = providers.Resource(configure_logger)
 
     # Infrastructure
+
+    db = providers.Singleton(
+        postgres.AsyncDatabase,
+        db_url=config.DB_URL,
+    )
 
     redis_client = providers.Resource(
         redis.init_redis,
