@@ -3,6 +3,7 @@ from typing import Any
 from jinja2 import BaseLoader, Environment, TemplateSyntaxError
 
 from notifications.helpers import SLUG_REGEX
+from notifications.infrastructure.emails.constants import TEMPLATES_DIR
 
 from .exceptions import InvalidSlugError, InvalidTemplateContentError
 from .models import Template
@@ -22,12 +23,23 @@ class TemplateService:
         self.validate_content(template.content)
         return await self._template_repository.create(template)
 
+    async def create_default_template(self, name: str, slug: str, filename: str) -> Template:
+        """Создание шаблона по умолчанию.
+
+        Если шаблон уже существует, то новый создан не будет.
+        """
+        self._validate_slug(slug)
+        template = Template(name=name, slug=slug, content=self.extract_content_from_file(filename))
+        default_template, _ = await self._template_repository.get_or_create(template)
+        return default_template
+
     async def get_all(self) -> list[Template]:
         """Получение списка всех шаблонов уведомлений."""
         return await self._template_repository.get_all()
 
     async def get_by_slug(self, slug: str, /) -> Template:
         """Получение шаблона уведомления по слагу."""
+        self._validate_slug(slug)
         return await self._template_repository.get_by_slug(slug)
 
     async def update_content_by_slug(self, slug: str, *, content: str) -> Template:
@@ -40,6 +52,12 @@ class TemplateService:
         """Удаление шаблона по слагу."""
         self._validate_slug(slug)
         await self._template_repository.delete_by_slug(slug)
+
+    @staticmethod
+    def extract_content_from_file(filename: str, /) -> str:
+        """Получение содержимого из файла."""
+        with open(TEMPLATES_DIR / filename, "r") as file:
+            return file.read()
 
     @staticmethod
     def render_template_from_string(content: str, *, context: dict[str, Any]) -> str:
