@@ -30,8 +30,9 @@ if TYPE_CHECKING:
 @inject
 async def send_email(
     self: Task,
-    notification: NotificationPayload, *,
+    notification: NotificationPayload, *args,
     email_service: EmailNotificationService = Provide[Container.email_notification_service],
+    **kwargs,
 ) -> None:
     """Фоновая задача по отправке уведомления на почту."""
     await email_service.send_message(notification)
