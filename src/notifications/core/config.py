@@ -19,7 +19,9 @@ class CelerySettings:
     """Настройки Celery."""
 
     TIMEZONE = "Europe/Moscow"
-    ACCEPT_CONTENT = ["application/json"]
+    # XXX: celery-chunkify необходим `pickle` сериализатор для использования date/datetime чанков
+    # TODO [Дипломный проект]: Доработать celery-chunkify-task и избавиться от необходимости использования pickle
+    CELERY_ACCEPT_CONTENT = ["application/json", "application/x-python-serialize", "pickle"]
     RESULT_SERIALIZER = "json"
     TASK_SERIALIZER = "json"
     RESULT_EXPIRES = 10 * 60
@@ -59,6 +61,7 @@ class Settings(BaseSettings):
     DB_USER: str
     DB_PASSWORD: str
     DB_URL: str = None
+    BEAT_DB_URL: str = None
 
     # Redis
     REDIS_DECODE_RESPONSES: bool = Field(True)
@@ -83,16 +86,28 @@ class Settings(BaseSettings):
             return [item.strip() for item in server_hosts.split(",")]
         return server_hosts
 
+    @validator("BEAT_DB_URL", pre=True)
+    def get_beat_db_url(cls, value, values) -> str:
+        if value is not None:
+            return value
+        user, password, host, port, database = cls._get_db_info(values)
+        return f"postgresql://{user}:{password}@{host}:{port}/{database}"
+
     @validator("DB_URL", pre=True)
     def get_db_url(cls, value, values) -> str:
         if value is not None:
             return value
+        user, password, host, port, database = cls._get_db_info(values)
+        return f"postgresql+asyncpg://{user}:{password}@{host}:{port}/{database}"
+
+    @staticmethod
+    def _get_db_info(values: dict) -> tuple[str, str, str, str, str]:
         user = values["DB_USER"]
         password = values["DB_PASSWORD"]
         host = values["DB_HOST"]
         port = values["DB_PORT"]
         database = values["DB_NAME"]
-        return f"postgresql://{user}:{password}@{host}:{port}/{database}"
+        return user, password, host, port, database
 
 
 @lru_cache()

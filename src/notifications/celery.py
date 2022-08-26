@@ -58,7 +58,7 @@ class Task(_Task):
         return True
 
     def delay(self, *args, force: bool = False, **kwargs) -> AsyncResult | None:
-        if not self.lock_ttl:
+        if not self.lock_ttl or "chunk" in kwargs:
             return super().apply_async(args, kwargs)
         lock_key = self.get_lock_key(args, kwargs)
         if self.acquire_lock(lock_key, force=force):
@@ -66,7 +66,7 @@ class Task(_Task):
         return None
 
     def apply_async(self, args=None, kwargs=None, *, force: bool = False, **options) -> AsyncResult | None:
-        if not self.lock_ttl:
+        if not self.lock_ttl or "chunk" in kwargs:
             return super().apply_async(args=args, kwargs=kwargs, **options)
         lock_key = self.get_lock_key(args, kwargs)
         if self.acquire_lock(lock_key, force=force):
@@ -79,7 +79,7 @@ def create_celery() -> Celery:
     celery_config = {
         "broker_url": settings.CELERY_BROKER_URL,
         "result_backend": settings.CELERY_RESULT_BACKEND,
-        "beat_dburi": settings.DB_URL,
+        "beat_dburi": settings.BEAT_DB_URL,
     }
     app = Celery(
         main="notifications",
