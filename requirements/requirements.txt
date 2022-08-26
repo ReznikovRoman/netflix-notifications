@@ -118,6 +118,10 @@ crashtest==0.3.1 \
     --hash=sha256:300f4b0825f57688b47b6d70c6a31de33512eb2fa1ac614f780939aa0cf91680 \
     --hash=sha256:42ca7b6ce88b6c7433e2ce47ea884e91ec93104a4b754998be498a8e6c3d37dd
     # via cleo
+cron-validator==1.0.6 \
+    --hash=sha256:0d387bf722fc10d8bde6dae6e21c67d6857e3e558b7eb3010b0ee8f69af2f455 \
+    --hash=sha256:becb627772f57cf733751be48094149a55d422df7887ff95ac1ac72df5b56bb9
+    # via -r requirements.in
 dependency-injector==4.39.1 \
     --hash=sha256:029e42b064ab8cb5b2559be040ff682c7aa81592f1654a82355475956df17803 \
     --hash=sha256:0935d50b263169e7b0826a2fb6be80d6a4f2a7c59e6dd9876f86da3243bea9eb \
@@ -496,7 +500,9 @@ pyparsing==3.0.9 \
 python-dateutil==2.8.2 \
     --hash=sha256:0123cacc1627ae19ddf3c27a5de5bd67ee4586fbdd6440d9748f8abb483d3e86 \
     --hash=sha256:961d03dc3453ebbc59dbdea9e4e11c5651520a876d0f4db161e8674aae935da9
-    # via faker
+    # via
+    #   cron-validator
+    #   faker
 python-dotenv==0.20.0 \
     --hash=sha256:b7e3b04a59693c42c36f9ab1cc2acc46fa5df8c78e178fc33a8d4cd05c8d498f \
     --hash=sha256:d92a187be61fe482e4fd675b6d52200e7be63a12b724abbf931a40ce4fa92938
@@ -516,7 +522,9 @@ python-ulid==1.1.0 \
 pytz==2022.1 \
     --hash=sha256:1e760e2fe6a8163bc0b3d9a19c4f84342afa0a2affebfaa84b01b978a02ecaa7 \
     --hash=sha256:e68985985296d9a66a881eb3193b0906246245294a881e7c8afe623866ac6a5c
-    # via celery
+    # via
+    #   celery
+    #   cron-validator
 redis==4.3.4 \
     --hash=sha256:a52d5694c9eb4292770084fa8c863f79367ca19884b329ab574d5cb2036b3e54 \
     --hash=sha256:ddf27071df4adf3821c4f2ca59d67525c3a82e5f268bed97b813cb4fabf87880

@@ -8,6 +8,7 @@ python-jose==3.3.0
 Jinja2==3.1.2
 python-slugify==6.1.2
 email-validator==1.2.1
+cron-validator==1.0.6
 dependency-injector==4.39.1
 
 fastapi==0.79.1
