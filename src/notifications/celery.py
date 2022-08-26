@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING, Callable, ClassVar
 import redis
 from celery import Celery
 from celery.app.task import Task as _Task
+from celery.schedules import crontab
 from celery.utils.log import get_task_logger
 
 from notifications.core.config import CelerySettings, get_settings
@@ -95,6 +96,12 @@ def create_celery() -> Celery:
 
     # CELERY PERIODIC TASKS
     # https://docs.celeryproject.org/en/stable/userguide/periodic-tasks.html
-    app.conf.beat_schedule = {}
+    app.conf.beat_schedule = {
+        # Рассылка еженедельного дайджеста подписчикам
+        "send_weekly_digest": {
+            "task": "notifications.domain.periodic_tasks.tasks.send_weekly_digest_to_subscribers",
+            "schedule": crontab(hour="19", minute="0", day_of_week="5"),
+        },
+    }
 
     return app
