@@ -102,7 +102,6 @@
       ```json
         [
           {
-            "task_id": "b55d75e5-8193-4cbf-9383-0cfeff3bf140",
             "slug": "send_email"
           }
         ]

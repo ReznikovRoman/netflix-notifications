@@ -26,6 +26,7 @@ class Container(containers.DeclarativeContainer):
         modules=[
             "notifications.api.v1.handlers.m2m",
             "notifications.api.v1.handlers.templates",
+            "notifications.api.v1.handlers.dashboard",
             "notifications.domain.messages.tasks",
             "notifications.domain.periodic_tasks.tasks",
         ],

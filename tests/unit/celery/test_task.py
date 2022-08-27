@@ -51,7 +51,7 @@ class TestCeleryTask:
         result_3 = task.delay(5, addend_b=6)
 
         assert isinstance(result_1, AsyncResult)
-        assert result_2 is None
+        assert result_2.id == "-1"
         assert isinstance(result_3, AsyncResult)
         assert result_3.get() == 11
 
@@ -87,7 +87,7 @@ class TestCeleryTask:
         result_3 = task.apply_async((5,), {"addend_b": 6})
 
         assert isinstance(result_1, AsyncResult)
-        assert result_2 is None
+        assert result_2.id == "-1"
         assert isinstance(result_3, AsyncResult)
         assert result_3.get() == 11
 
