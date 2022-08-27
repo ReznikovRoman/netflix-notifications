@@ -68,6 +68,7 @@ async def send_weekly_digest_to_subscriber(
     **kwargs,
 ) -> None:
     """Фоновая задача по отправке еженедельного дайджеста одному подписчику."""
+    # TODO [Дипломный проект]: Сделать задачу идемпотентной -> сохранять информацию об отправке уведомления
     user_payload["registration_date"] = user_payload["registration_date"].rsplit("T")[0]
     await task_service.send_digest_email_to_subscriber(UserDetail(**user_payload))
     self.log.debug(f"Email has been sent to <{user_payload['email']}>.")

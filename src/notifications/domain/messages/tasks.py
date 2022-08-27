@@ -35,6 +35,7 @@ async def send_email(
     **kwargs,
 ) -> None:
     """Фоновая задача по отправке уведомления на почту."""
+    # TODO [Дипломный проект]: Сделать задачу идемпотентной -> сохранять информацию об отправке уведомления
     await email_service.send_message(notification)
     self.log.info("Notification has been sent.")
 
