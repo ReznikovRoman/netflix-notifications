@@ -1,7 +1,7 @@
 from fastapi import APIRouter
 
 router = APIRouter(
-    tags=["misc"],
+    tags=["Misc"],
 )
 
 
