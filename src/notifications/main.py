@@ -8,7 +8,7 @@ from notifications.core.config import get_settings
 from .api.urls import api_router
 from .celery import create_celery
 from .common.exceptions import NetflixNotificationsError
-from .containers import Container, override_providers
+from .containers import Container, inject_celery_app, override_providers
 
 settings = get_settings()
 
@@ -48,6 +48,14 @@ def create_app() -> FastAPI:
         logging.info("Cleanup resources")
 
     app.container = container
-    app.celery_app = create_celery()
+    app, container = setup_celery(app, container)
     app.include_router(api_router)
     return app
+
+
+def setup_celery(app: FastAPI, container: Container) -> tuple[FastAPI, Container]:
+    """Настройка Celery приложения."""
+    celery_app = create_celery()
+    app.celery_app = celery_app
+    container = inject_celery_app(container, celery_app)
+    return app, container

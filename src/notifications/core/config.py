@@ -1,9 +1,19 @@
+import enum
 from functools import lru_cache
 from typing import Union
 
 from kombu import Exchange, Queue
 from pydantic import AnyHttpUrl, Field, validator
 from pydantic.env_settings import BaseSettings
+
+
+class CeleryQueue(str, enum.Enum):
+    """Очереди в Celery."""
+
+    DEFAULT = "default"
+    CELERY = "celery"
+    COMMON = "common"
+    URGENT_NOTIFICATIONS = "urgent_notifications"
 
 
 class EnvConfig(BaseSettings.Config):
@@ -19,20 +29,22 @@ class CelerySettings:
     """Настройки Celery."""
 
     TIMEZONE = "Europe/Moscow"
-    ACCEPT_CONTENT = ["application/json"]
+    # XXX: celery-chunkify необходим `pickle` сериализатор для использования date/datetime чанков
+    # TODO [Дипломный проект]: Доработать celery-chunkify-task и избавиться от необходимости использования pickle
+    CELERY_ACCEPT_CONTENT = ["application/json", "application/x-python-serialize", "pickle"]
     RESULT_SERIALIZER = "json"
     TASK_SERIALIZER = "json"
     RESULT_EXPIRES = 10 * 60
     TASK_TIME_LIMIT = 8 * 60 * 60  # 8 hours
     TASK_SOFT_TIME_LIMIT = 10 * 60 * 60  # 10 hours
     TASK_QUEUES = (
-        Queue(name="default", exchange=Exchange("default"), routing_key="default"),
-        Queue(name="celery"),
-        Queue(name="emails"),
-        Queue(name="urgent_notifications"),
+        Queue(name=CeleryQueue.DEFAULT.value, exchange=Exchange("default"), routing_key="default"),
+        Queue(name=CeleryQueue.CELERY.value),
+        Queue(name=CeleryQueue.COMMON.value),
+        Queue(name=CeleryQueue.URGENT_NOTIFICATIONS.value),
     )
     TASK_CREATE_MISSING_QUEUES = True
-    TASK_DEFAULT_QUEUE = "default"
+    TASK_DEFAULT_QUEUE = CeleryQueue.DEFAULT.value
     TASK_DEFAULT_EXCHANGE = "default"
     TASK_DEFAULT_ROUTING_KEY = "default"
 
@@ -59,6 +71,7 @@ class Settings(BaseSettings):
     DB_USER: str
     DB_PASSWORD: str
     DB_URL: str = None
+    BEAT_DB_URL: str = None
 
     # Redis
     REDIS_DECODE_RESPONSES: bool = Field(True)
@@ -83,16 +96,28 @@ class Settings(BaseSettings):
             return [item.strip() for item in server_hosts.split(",")]
         return server_hosts
 
+    @validator("BEAT_DB_URL", pre=True)
+    def get_beat_db_url(cls, value, values) -> str:
+        if value is not None:
+            return value
+        user, password, host, port, database = cls._get_db_info(values)
+        return f"postgresql://{user}:{password}@{host}:{port}/{database}"
+
     @validator("DB_URL", pre=True)
     def get_db_url(cls, value, values) -> str:
         if value is not None:
             return value
+        user, password, host, port, database = cls._get_db_info(values)
+        return f"postgresql+asyncpg://{user}:{password}@{host}:{port}/{database}"
+
+    @staticmethod
+    def _get_db_info(values: dict) -> tuple[str, str, str, str, str]:
         user = values["DB_USER"]
         password = values["DB_PASSWORD"]
         host = values["DB_HOST"]
         port = values["DB_PORT"]
         database = values["DB_NAME"]
-        return f"postgresql://{user}:{password}@{host}:{port}/{database}"
+        return user, password, host, port, database
 
 
 @lru_cache()

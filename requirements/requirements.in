@@ -8,6 +8,7 @@ python-jose==3.3.0
 Jinja2==3.1.2
 python-slugify==6.1.2
 email-validator==1.2.1
+cron-validator==1.0.6
 dependency-injector==4.39.1
 
 fastapi==0.79.1
@@ -24,9 +25,12 @@ hiredis==2.0.0
 loguru==0.6.0
 celery==5.2.7
 celery-sqlalchemy-scheduler==0.3.0
+https://github.com/ReznikovRoman/celery-chunkify-task/archive/6e16c54717369c6ac432ecf60cea01d661fd8d3a.zip
 
 gunicorn==20.1.0
 asgiref==3.5.2
 uvicorn==0.18.2
 uvloop==0.16.0
 greenlet==1.1.2
+
+pydantic-factories==1.4.1

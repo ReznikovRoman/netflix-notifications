@@ -10,6 +10,7 @@ services:
       - $ENV
     environment:
       - REDIS_OM_URL=${NN_REDIS_OM_URL}
+      - C_FORCE_ROOT=1
     expose:
       - $NN_SERVER_PORT
     volumes:
@@ -69,10 +70,11 @@ services:
       - ${ENV}
     environment:
       - REDIS_OM_URL=${NN_REDIS_OM_URL}
+      - C_FORCE_ROOT=1
     build: .
     command: >
       bash -c "cd /app/src/
-      && celery -A notifications.celery_app worker -Q default,celery,emails,urgent_notifications -l info -c 2 -n default_worker"
+      && celery -A notifications.celery_app worker -Q default,celery,common,urgent_notifications -l info -c 2 -n default_worker"
     volumes:
       - .:/app
     healthcheck:
@@ -95,6 +97,7 @@ services:
       - ${ENV}
     environment:
       - REDIS_OM_URL=${NN_REDIS_OM_URL}
+      - C_FORCE_ROOT=1
     command: >
       bash -c "cd /app/src/
       && celery -A notifications.celery_app worker -Q urgent_notifications -l info -c 1 -n high_priority"
@@ -120,9 +123,10 @@ services:
       - ${ENV}
     environment:
       - REDIS_OM_URL=${NN_REDIS_OM_URL}
+      - C_FORCE_ROOT=1
     command: >
       bash -c "cd /app/src/
-      && celery -A notifications.celery_app worker -Q emails,urgent_notifications -l info -c 1 -n low_priority"
+      && celery -A notifications.celery_app worker -Q common,urgent_notifications -l info -c 1 -n low_priority"
     volumes:
       - .:/app
     healthcheck:
@@ -144,6 +148,7 @@ services:
       - ${ENV}
     environment:
       - REDIS_OM_URL=${NN_REDIS_OM_URL}
+      - C_FORCE_ROOT=1
     build: .
     volumes:
       - .:/app

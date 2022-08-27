@@ -25,6 +25,17 @@ class TemplateRepository:
         else:
             raise ConflictError(message=f"Template with slug <{template.slug}> already exists.")
 
+    async def get_or_create(self, template: Template, /) -> tuple[Template, bool]:
+        """Получение шаблона по слагу или создание нового.
+
+        Если шаблон не найден, то будет создан новый с заданными названием и содержимым.
+        """
+        default_template, created = await self._redis_repository.get_or_create(
+            defaults={"content": template.content, "name": template.name},
+            slug=template.slug,
+        )
+        return default_template, created
+
     async def get_by_slug(self, slug: str, /) -> Template:
         """Получение шаблона по слагу."""
         try:

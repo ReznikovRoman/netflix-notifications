@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING, Callable, ClassVar
 import redis
 from celery import Celery
 from celery.app.task import Task as _Task
+from celery.schedules import crontab
 from celery.utils.log import get_task_logger
 
 from notifications.core.config import CelerySettings, get_settings
@@ -58,7 +59,7 @@ class Task(_Task):
         return True
 
     def delay(self, *args, force: bool = False, **kwargs) -> AsyncResult | None:
-        if not self.lock_ttl:
+        if not self.lock_ttl or "chunk" in kwargs:
             return super().apply_async(args, kwargs)
         lock_key = self.get_lock_key(args, kwargs)
         if self.acquire_lock(lock_key, force=force):
@@ -66,7 +67,7 @@ class Task(_Task):
         return None
 
     def apply_async(self, args=None, kwargs=None, *, force: bool = False, **options) -> AsyncResult | None:
-        if not self.lock_ttl:
+        if not self.lock_ttl or "chunk" in kwargs:
             return super().apply_async(args=args, kwargs=kwargs, **options)
         lock_key = self.get_lock_key(args, kwargs)
         if self.acquire_lock(lock_key, force=force):
@@ -79,7 +80,7 @@ def create_celery() -> Celery:
     celery_config = {
         "broker_url": settings.CELERY_BROKER_URL,
         "result_backend": settings.CELERY_RESULT_BACKEND,
-        "beat_dburi": settings.DB_URL,
+        "beat_dburi": settings.BEAT_DB_URL,
     }
     app = Celery(
         main="notifications",
@@ -95,6 +96,12 @@ def create_celery() -> Celery:
 
     # CELERY PERIODIC TASKS
     # https://docs.celeryproject.org/en/stable/userguide/periodic-tasks.html
-    app.conf.beat_schedule = {}
+    app.conf.beat_schedule = {
+        # Рассылка еженедельного дайджеста подписчикам
+        "send_weekly_digest": {
+            "task": "notifications.domain.periodic_tasks.tasks.send_weekly_digest_to_subscribers",
+            "schedule": crontab(hour="19", minute="0", day_of_week="5"),
+        },
+    }
 
     return app

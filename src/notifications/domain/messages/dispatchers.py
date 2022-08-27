@@ -1,4 +1,5 @@
 from notifications.api.v1.schemas import NotificationIn, NotificationShortDetails
+from notifications.core.config import CeleryQueue
 from notifications.domain.templates import TemplateService
 
 from .enums import NotificationPriority, NotificationType
@@ -50,9 +51,9 @@ class NotificationDispatcherService:
         except ValueError:
             current_priority = NotificationPriority.DEFAULT.value
         priority_queue_map = {
-            NotificationPriority.DEFAULT.value: "default",
-            NotificationPriority.EMAILS.value: "emails",
-            NotificationPriority.URGENT.value: "urgent_notifications",
+            NotificationPriority.DEFAULT.value: CeleryQueue.DEFAULT.value,
+            NotificationPriority.COMMON.value: CeleryQueue.COMMON.value,
+            NotificationPriority.URGENT.value: CeleryQueue.URGENT_NOTIFICATIONS.value,
         }
         return priority_queue_map[current_priority]
 

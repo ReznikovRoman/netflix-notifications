@@ -1,4 +1,6 @@
-from typing import Any, TypedDict
+from typing import Any, Sequence, TypedDict
+
+from typing_extensions import NotRequired
 
 Queue = str
 
@@ -7,8 +9,7 @@ class NotificationPayload(TypedDict):
     """Сериализованное уведомление."""
 
     subject: str
-    notification_type: str
-    recipient_list: list[str]
-    content: str | None
-    template_slug: str | None
-    context: dict[str, Any] | None
+    recipient_list: Sequence[str]
+    content: NotRequired[str]
+    template_slug: NotRequired[str]
+    context: NotRequired[dict[str, Any]]

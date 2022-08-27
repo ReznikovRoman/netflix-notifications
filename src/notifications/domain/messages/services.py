@@ -26,7 +26,7 @@ class BaseNotificationService(ABC):
         if content is not None:
             return content
         template_slug = payload["template_slug"]
-        return await self._get_template_content_by_slug(template_slug, context=payload["context"])
+        return await self._get_template_content_by_slug(template_slug, context=payload.get("context", {}))
 
     async def _get_template_content_by_slug(self, slug: str, /, *, context: dict[str, Any]) -> str:
         """Получение текста сообщения после рендера шаблона."""
