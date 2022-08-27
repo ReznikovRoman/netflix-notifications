@@ -42,3 +42,26 @@ class NotificationShortDetails(BaseModel):
 
     notification_id: str
     queue: Queue
+
+
+class TemplateIn(BaseModel):
+    """Новый шаблон."""
+
+    name: str
+    slug: str
+    content: str
+
+
+class TemplateList(BaseModel):
+    """Список шаблонов."""
+
+    pk: str
+    name: str
+    slug: str
+
+
+class TemplateUpdate(BaseModel):
+    """Обновление шаблона."""
+
+    name: str | None
+    content: str | None

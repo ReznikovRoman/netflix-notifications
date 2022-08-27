@@ -47,10 +47,13 @@ class TemplateRepository:
         """Получение списка сохраненных шаблонов уведомлений."""
         return await self._redis_repository.model.find().all()
 
-    async def update_content_by_slug(self, slug: str, content: str) -> Template:
-        """Обновление контента/содержимого шаблона по слагу."""
+    async def update_fields_by_slug(self, slug: str, *, update_fields: dict) -> Template:
+        """Обновление шаблона по слагу."""
         template = await self.get_by_slug(slug)
-        template.content = content
+        for field, value in update_fields.items():
+            if field == "slug":
+                continue
+            setattr(template, field, value)
         return await template.save()
 
     async def delete_by_slug(self, slug: str, /) -> None:

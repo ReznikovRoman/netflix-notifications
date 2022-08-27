@@ -59,7 +59,7 @@
       ```json
         [
           {
-            "template_id": "b55d75e5-8193-4cbf-9383-0cfeff3bf140",
+            "pk": "b55d75e5-8193-4cbf-9383-0cfeff3bf140",
             "name": "Greeting email",
             "slug": "greeting_email"
           }
@@ -78,7 +78,10 @@
     - Тело ответа
       ```json
         {
-          "template_id": "b55d75e5-8193-4cbf-9383-0cfeff3bf140"
+          "pk": "b55d75e5-8193-4cbf-9383-0cfeff3bf140",
+          "name": "Greeting email",
+          "slug": "greeting_email",
+          "content": "Welcome, {{ full_name }}!"
         }
       ```
   - Редактирование шаблона письма
