@@ -24,6 +24,8 @@ class Container(containers.DeclarativeContainer):
 
     wiring_config = containers.WiringConfiguration(
         modules=[
+            "notifications.api.v1.handlers.m2m",
+            "notifications.api.v1.handlers.templates",
             "notifications.domain.messages.tasks",
             "notifications.domain.periodic_tasks.tasks",
         ],

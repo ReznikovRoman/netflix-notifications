@@ -55,6 +55,7 @@ class TemplateIn(BaseModel):
 class TemplateList(BaseModel):
     """Список шаблонов."""
 
+    pk: str
     name: str
     slug: str
 
