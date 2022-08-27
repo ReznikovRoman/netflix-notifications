@@ -4,7 +4,7 @@ skinparam componentStyle uml2
 skinparam defaultFontName Segoe UI
 skinparam backgroundColor motivation
 
-title Netflix [TO BE]
+title Netflix [AS IS]
 
 agent "Client" as base_client
 
