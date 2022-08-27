@@ -2,6 +2,7 @@ from typing import Any
 
 from jinja2 import BaseLoader, Environment, TemplateSyntaxError
 
+from notifications.api.v1.schemas import TemplateUpdate
 from notifications.helpers import SLUG_REGEX
 from notifications.infrastructure.emails.constants import TEMPLATES_DIR
 
@@ -42,11 +43,13 @@ class TemplateService:
         self._validate_slug(slug)
         return await self._template_repository.get_by_slug(slug)
 
-    async def update_content_by_slug(self, slug: str, *, content: str) -> Template:
-        """Обновление содержания шаблона по его слагу."""
+    async def update_by_slug(self, slug: str, *, updated_template: TemplateUpdate) -> Template:
+        """Обновление шаблона по его слагу."""
         self._validate_slug(slug)
-        self.validate_content(content)
-        return await self._template_repository.update_content_by_slug(slug, content)
+        if updated_content := updated_template.content:
+            self.validate_content(updated_content)
+        fields_to_update = updated_template.dict(exclude_none=True)
+        return await self._template_repository.update_fields_by_slug(slug, update_fields=fields_to_update)
 
     async def delete_by_slug(self, slug: str, /) -> None:
         """Удаление шаблона по слагу."""
