@@ -6,14 +6,13 @@ from typing import TYPE_CHECKING, Callable, ClassVar
 import redis
 from celery import Celery
 from celery.app.task import Task as _Task
+from celery.result import AsyncResult
 from celery.schedules import crontab
 from celery.utils.log import get_task_logger
 
 from notifications.core.config import CelerySettings, get_settings
 
 if TYPE_CHECKING:
-    from celery.result import AsyncResult
-
     from .types import seconds
 
 settings = get_settings()
@@ -58,21 +57,21 @@ class Task(_Task):
         self.log.debug(f"[{lock_key}] has been acquired")
         return True
 
-    def delay(self, *args, force: bool = False, **kwargs) -> AsyncResult | None:
+    def delay(self, *args, force: bool = False, **kwargs) -> AsyncResult:
         if not self.lock_ttl or "chunk" in kwargs:
             return super().apply_async(args, kwargs)
         lock_key = self.get_lock_key(args, kwargs)
         if self.acquire_lock(lock_key, force=force):
             return super().apply_async(args, kwargs)
-        return None
+        return AsyncResult(id="-1")
 
-    def apply_async(self, args=None, kwargs=None, *, force: bool = False, **options) -> AsyncResult | None:
+    def apply_async(self, args=None, kwargs=None, *, force: bool = False, **options) -> AsyncResult:
         if not self.lock_ttl or "chunk" in kwargs:
             return super().apply_async(args=args, kwargs=kwargs, **options)
         lock_key = self.get_lock_key(args, kwargs)
         if self.acquire_lock(lock_key, force=force):
             return super().apply_async(args=args, kwargs=kwargs, **options)
-        return None
+        return AsyncResult(id="-1")
 
 
 def create_celery() -> Celery:
