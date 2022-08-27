@@ -74,7 +74,7 @@ services:
     build: .
     command: >
       bash -c "cd /app/src/
-      && celery -A notifications.celery_app worker -Q default,celery,emails,urgent_notifications -l info -c 2 -n default_worker"
+      && celery -A notifications.celery_app worker -Q default,celery,common,urgent_notifications -l info -c 2 -n default_worker"
     volumes:
       - .:/app
     healthcheck:
@@ -126,7 +126,7 @@ services:
       - C_FORCE_ROOT=1
     command: >
       bash -c "cd /app/src/
-      && celery -A notifications.celery_app worker -Q emails,urgent_notifications -l info -c 1 -n low_priority"
+      && celery -A notifications.celery_app worker -Q common,urgent_notifications -l info -c 1 -n low_priority"
     volumes:
       - .:/app
     healthcheck:

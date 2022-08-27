@@ -10,6 +10,7 @@ from celery_chunkificator.chunkify import DateChunk, chunkify_task
 from dependency_injector.wiring import Provide, inject
 
 from notifications.containers import Container
+from notifications.core.config import CeleryQueue
 from notifications.helpers import TZ_MOSCOW, sync_task
 from notifications.integrations.auth.enums import DefaultRoles
 from notifications.integrations.auth.types import BoundaryRegistrationDate, UserDetail
@@ -49,7 +50,7 @@ get_subscribers_initial_chunk = partial(get_users_initial_chunk, user_role=Defau
 
 
 @shared_task(
-    queue="emails",
+    queue=CeleryQueue.COMMON.value,
     bind=True,
     ignore_result=True,
     time_limit=5,
@@ -73,7 +74,7 @@ async def send_weekly_digest_to_subscriber(
 
 
 @shared_task(
-    queue="emails",
+    queue=CeleryQueue.COMMON.value,
     bind=True,
     serializer="pickle",
     ignore_result=True,
@@ -103,7 +104,7 @@ async def send_weekly_digest_to_subscribers(
 
 @shared_task(
     name=f"{PERIODIC_TASK_PREFIX}periodic_tasks.tasks.send_emails_with_template",
-    queue="emails",
+    queue=CeleryQueue.COMMON.value,
     bind=True,
     serializer="pickle",
     ignore_result=True,

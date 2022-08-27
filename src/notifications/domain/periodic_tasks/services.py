@@ -1,6 +1,7 @@
 import dataclasses
 import uuid
 
+from notifications.core.config import CeleryQueue
 from notifications.domain.messages import EmailNotificationService
 from notifications.domain.messages.types import NotificationPayload
 from notifications.domain.templates import TemplateService
@@ -58,7 +59,7 @@ class TaskService:
 
         for user in self.auth_client.get_users_within_registration_date_range_iter(dates_boundary):
             payload = self._build_template_payload(user, template_slug=template_slug, email_subject=email_subject)
-            send_email.apply_async(args=[payload], queue="emails")
+            send_email.apply_async(args=[payload], queue=CeleryQueue.COMMON.value)
 
     async def send_digest_email_to_subscriber(self, user_data: UserDetail, /) -> None:
         """Отправка еженедельного дайджеста одному пользователю."""

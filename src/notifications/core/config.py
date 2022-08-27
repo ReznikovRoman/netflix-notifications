@@ -1,9 +1,19 @@
+import enum
 from functools import lru_cache
 from typing import Union
 
 from kombu import Exchange, Queue
 from pydantic import AnyHttpUrl, Field, validator
 from pydantic.env_settings import BaseSettings
+
+
+class CeleryQueue(str, enum.Enum):
+    """Очереди в Celery."""
+
+    DEFAULT = "default"
+    CELERY = "celery"
+    COMMON = "common"
+    URGENT_NOTIFICATIONS = "urgent_notifications"
 
 
 class EnvConfig(BaseSettings.Config):
@@ -28,13 +38,13 @@ class CelerySettings:
     TASK_TIME_LIMIT = 8 * 60 * 60  # 8 hours
     TASK_SOFT_TIME_LIMIT = 10 * 60 * 60  # 10 hours
     TASK_QUEUES = (
-        Queue(name="default", exchange=Exchange("default"), routing_key="default"),
-        Queue(name="celery"),
-        Queue(name="emails"),
-        Queue(name="urgent_notifications"),
+        Queue(name=CeleryQueue.DEFAULT.value, exchange=Exchange("default"), routing_key="default"),
+        Queue(name=CeleryQueue.CELERY.value),
+        Queue(name=CeleryQueue.COMMON.value),
+        Queue(name=CeleryQueue.URGENT_NOTIFICATIONS.value),
     )
     TASK_CREATE_MISSING_QUEUES = True
-    TASK_DEFAULT_QUEUE = "default"
+    TASK_DEFAULT_QUEUE = CeleryQueue.DEFAULT.value
     TASK_DEFAULT_EXCHANGE = "default"
     TASK_DEFAULT_ROUTING_KEY = "default"
 

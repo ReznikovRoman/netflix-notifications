@@ -11,5 +11,5 @@ class NotificationPriority(str, enum.Enum):
     """Приоритет уведомления."""
 
     URGENT = "urgent"
-    EMAILS = "emails"
+    COMMON = "common"
     DEFAULT = "default"
