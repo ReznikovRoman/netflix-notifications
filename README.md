@@ -32,7 +32,7 @@ docker-compose содержат контейнеры:
 
 Для запуска контейнеров нужно создать файл `.env` в корне проекта.
 
-**Пример `.env`:**
+**Пример `.env` (также можно посмотреть [env файл](./.env.example)):**
 
 ```dotenv
 ENV=.env
@@ -51,10 +51,26 @@ NN_SERVER_NAME=localhost
 NN_SERVER_HOSTS=http://api-notifications.localhost:8011
 # Auth
 NAA_SECRET_KEY=changeme
+# Postgres
+NN_DB_HOST=db
+NN_DB_PORT=5432
+NN_DB_NAME=netflix_notifications
+NN_DB_USER=yandex
+NN_DB_PASSWORD=netflix
+# Redis
+NN_REDIS_DECODE_RESPONSES=1
+NN_REDIS_PORT=6379
+NN_REDIS_URL=redis://redis-primary:6379/0
+NN_REDIS_OM_URL=redis://@redis-primary:6379
+# Celery
+NN_CELERY_BROKER_URL=redis://redis-celery:6379/0
+NN_CELERY_RESULT_BACKEND=redis://redis-celery:6379/0
+# Flower
+NN_FLOWER_PORT=8888
 # Config
 NN_USE_STUBS=0
 NN_TESTING=0
-NN_CI=0
+NN_CI=1
 ```
 
 ### Запуск проекта:
@@ -114,6 +130,22 @@ NN_SERVER_NAME=localhost
 NN_SERVER_HOSTS=http://api-notifications.localhost:8011
 # Auth
 NAA_SECRET_KEY=changeme
+# Postgres
+NN_DB_HOST=db
+NN_DB_PORT=5432
+NN_DB_NAME=netflix_notifications
+NN_DB_USER=yandex
+NN_DB_PASSWORD=netflix
+# Redis
+NN_REDIS_DECODE_RESPONSES=1
+NN_REDIS_PORT=6379
+NN_REDIS_URL=redis://redis-primary:6379/0
+NN_REDIS_OM_URL=redis://@redis-primary:6379
+# Celery
+NN_CELERY_BROKER_URL=redis://redis-celery:6379/0
+NN_CELERY_RESULT_BACKEND=redis://redis-celery:6379/0
+# Flower
+NN_FLOWER_PORT=8888
 # Config
 NN_USE_STUBS=1
 NN_TESTING=1
