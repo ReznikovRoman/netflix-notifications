@@ -4,7 +4,7 @@ from pydantic import BaseModel
 
 
 class RecommendationShortDetail(BaseModel):
-    """Короткая информации о рекомендованном фильме."""
+    """Короткая информация о рекомендованном фильме."""
 
     pk: uuid.UUID
     title: str

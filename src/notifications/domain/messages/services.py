@@ -14,7 +14,7 @@ class BaseNotificationService(ABC):
 
     @abstractmethod
     async def send_message(self, message_payload: NotificationPayload, /) -> int:
-        """Отправка уведомления пользователю на почту."""
+        """Отправка уведомления пользователю."""
 
     @abstractmethod
     async def build_message_from_payload(self, payload: NotificationPayload, /) -> EmailMessageDetail:

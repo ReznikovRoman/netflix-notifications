@@ -5,6 +5,7 @@ from aredis_om import Migrator
 
 
 async def init_redis(url: str) -> AsyncIterator[aioredis.Redis]:
+    """Инициализация клиентов async Redis и Redis OM."""
     redis_client: aioredis.Redis = await aioredis.from_url(url)
     await Migrator().run()
     yield redis_client

@@ -11,11 +11,11 @@ class NetflixUgcClient:
     # TODO [Дипломный проект]: добавить репозитории к integrations.ugc
 
     def get_recommendations_for_user_iter(self, user_pk: uuid.UUID, /) -> Iterator[RecommendationShortDetail]:
-        """Получение рекомендация для пользователя `user_pk`.
+        """Получение рекомендаций для пользователя `user_pk`.
 
         Возвращает итератор.
         """
 
     def get_recommendations_for_user(self, user_pk: uuid.UUID, /) -> list[RecommendationShortDetail]:
-        """Получение рекомендация для пользователя `user_pk`."""
+        """Получение рекомендаций для пользователя `user_pk`."""
         return list(self.get_recommendations_for_user_iter(user_pk))

@@ -37,7 +37,7 @@ class TaskService:
         return await self.task_repository.create_new_periodic(periodic_task)
 
     def is_periodic_task_available(self, target_task_name: str) -> bool:
-        """Проверяет, доступна ли Celery задача для использования."""
+        """Проверка доступности Celery задачи для использования."""
         for task in self.task_repository.get_all_registered_iter():
             if task.name == target_task_name:
                 return True

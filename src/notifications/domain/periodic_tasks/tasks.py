@@ -127,7 +127,7 @@ async def send_emails_with_template(
     task_service: TaskService = Provide[Container.task_service],
     **kwargs,
 ) -> None:
-    """Фоновая задача по рассылке еженедельного дайджеста всем подписчикам."""
+    """Фоновая задача по рассылке одинаковых писем всем пользователям."""
     start, end = chunk.range
     dates_boundary = BoundaryRegistrationDate(first_registration_date=start, last_registration_date=end)
     await task_service.spawn_email_with_templates_tasks_by_boundary(
