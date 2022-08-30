@@ -9,7 +9,6 @@
 !.pre-commit-config.yaml
 !.ecrc
 !.github
-!.env.example
 
 # Env data
 venv*/
