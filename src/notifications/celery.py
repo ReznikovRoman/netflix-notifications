@@ -1,27 +1,31 @@
 from __future__ import annotations
 
 import datetime
-from typing import TYPE_CHECKING, Callable, ClassVar
+from typing import TYPE_CHECKING, Any, Callable, ClassVar, Sequence
 
-import redis
 from celery import Celery
 from celery.app.task import Task as _Task
 from celery.result import AsyncResult
 from celery.schedules import crontab
 from celery.utils.log import get_task_logger
+from dependency_injector.wiring import Provide
 
 from notifications.core.config import CelerySettings, get_settings
 
+from .containers import Container
+
 if TYPE_CHECKING:
+    from notifications.infrastructure.db.cache import BaseCache
+
     from .types import seconds
 
 settings = get_settings()
 
-redis_client = redis.Redis.from_url(settings.REDIS_CELERY_URL)
-
 
 class Task(_Task):
-    """Переопределенная задача `celery.Task` для установки лока."""
+    """Переопределенная Celery задача для установки лока."""
+
+    cache_client: BaseCache = Provide[Container.cache_client]
 
     # ttl лока в секундах
     lock_ttl: ClassVar[seconds | None] = None
@@ -35,7 +39,7 @@ class Task(_Task):
         self.log.info(f"Starting task {self.request.id}")
         return super().__call__(*args, **kwargs)
 
-    def get_lock_key(self, args, kwargs) -> str:
+    def get_lock_key(self, args: Sequence[Any], kwargs: dict[str, Any]) -> str:
         """Получение ключа блокировки для сохранения в БД."""
         if lock_suffix := self.__class__.lock_suffix:
             if callable(lock_suffix):
@@ -49,9 +53,9 @@ class Task(_Task):
         timestamp = datetime.datetime.now().timestamp()
         if force:
             self.log.debug(f"force=True, ignoring [{lock_key}]")
-            redis_client.set(lock_key, timestamp, ex=self.lock_ttl)
+            self.cache_client.set(lock_key, timestamp, ttl=self.lock_ttl)
             return True
-        elif not redis_client.set(lock_key, timestamp, ex=self.lock_ttl, nx=True):
+        elif not self.cache_client.set(lock_key, timestamp, ttl=self.lock_ttl, create_missing=False):
             self.log.debug(f"[{lock_key}] is locked")
             return False
         self.log.debug(f"[{lock_key}] has been acquired")
@@ -65,7 +69,16 @@ class Task(_Task):
             return super().apply_async(args, kwargs)
         return AsyncResult(id="-1")
 
-    def apply_async(self, args=None, kwargs=None, *, force: bool = False, **options) -> AsyncResult:
+    def apply_async(
+        self,
+        args: Sequence[Any] | None = None, kwargs: dict[str, Any] | None = None, *,
+        force: bool = False,
+        **options,
+    ) -> AsyncResult:
+        if args is None:
+            args = ()
+        if kwargs is None:
+            kwargs = {}
         if not self.lock_ttl or "chunk" in kwargs:
             return super().apply_async(args=args, kwargs=kwargs, **options)
         lock_key = self.get_lock_key(args, kwargs)

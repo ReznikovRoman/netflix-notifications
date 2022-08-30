@@ -5,9 +5,10 @@ from typing import TYPE_CHECKING
 
 from dependency_injector import containers, providers
 
+from notifications.core.config import get_settings
 from notifications.core.logging import configure_logger
 from notifications.domain import messages, periodic_tasks, templates
-from notifications.infrastructure.db import postgres, redis, repositories
+from notifications.infrastructure.db import cache, postgres, redis, repositories
 from notifications.infrastructure.emails.clients import ConsoleClient
 from notifications.infrastructure.emails.stubs import StreamStub
 from notifications.integrations.auth.stubs import NetflixAuthClientStub
@@ -18,12 +19,15 @@ from .helpers import sentinel
 if TYPE_CHECKING:
     from celery import Celery
 
+settings = get_settings()
+
 
 class Container(containers.DeclarativeContainer):
     """Контейнер с зависимостями."""
 
     wiring_config = containers.WiringConfiguration(
         modules=[
+            "notifications.celery",
             "notifications.api.v1.handlers.m2m",
             "notifications.api.v1.handlers.templates",
             "notifications.api.v1.handlers.dashboard",
@@ -32,7 +36,7 @@ class Container(containers.DeclarativeContainer):
         ],
     )
 
-    config = providers.Configuration()
+    config = providers.Configuration(pydantic_settings=[settings])
 
     logging = providers.Resource(configure_logger)
 
@@ -46,6 +50,21 @@ class Container(containers.DeclarativeContainer):
     redis_client = providers.Resource(
         redis.init_redis,
         url=config.REDIS_OM_URL,
+    )
+
+    sync_redis_connection = providers.Resource(
+        redis.init_sync_redis,
+        url=config.REDIS_CELERY_URL,
+    )
+
+    sync_redis_client = providers.Singleton(
+        redis.RedisClient,
+        redis_client=sync_redis_connection,
+    )
+
+    cache_client = providers.Resource(
+        cache.RedisCache,
+        redis_client=sync_redis_client,
     )
 
     redis_repository_factory = providers.Factory(
