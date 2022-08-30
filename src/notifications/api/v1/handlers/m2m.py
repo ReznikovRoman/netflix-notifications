@@ -28,5 +28,4 @@ async def send_notification(
     ),
 ):
     """Отправка одного уведомления пользователю."""
-    notification_details = await notification_dispatcher.dispatch_notification(notification)
-    return notification_details
+    return await notification_dispatcher.dispatch_notification(notification)
