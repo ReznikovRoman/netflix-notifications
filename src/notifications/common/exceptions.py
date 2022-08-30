@@ -1,12 +1,8 @@
 from http import HTTPStatus
 
 
-class BaseNetflixNotificationsError(Exception):
-    """Базовая ошибка сервиса."""
-
-
-class NetflixNotificationsError(BaseNetflixNotificationsError):
-    """Ошибка сервиса Netflix Notifications."""
+class APIErrorMixin:
+    """Миксин для ошибки REST API."""
 
     message: str
     code: str
@@ -29,6 +25,14 @@ class NetflixNotificationsError(BaseNetflixNotificationsError):
             },
         }
         return dct
+
+
+class BaseNetflixNotificationsError(Exception):
+    """Базовая ошибка сервиса."""
+
+
+class NetflixNotificationsError(APIErrorMixin, BaseNetflixNotificationsError):
+    """Ошибка сервиса Netflix Notifications."""
 
 
 class NotFoundError(NetflixNotificationsError):
