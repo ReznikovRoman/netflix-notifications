@@ -154,7 +154,7 @@ services:
       - .:/app
     command: >
       bash -c "cd /app/src/
-      && celery -A notifications.celery_app beat -l info --pidfile= --scheduler celery_sqlalchemy_scheduler.schedulers:DatabaseScheduler"
+      && celery -A notifications.celery_app beat -l info --pidfile= --scheduler notifications.celery:DatabaseScheduler"
     depends_on:
       redis-celery:
         condition: service_healthy

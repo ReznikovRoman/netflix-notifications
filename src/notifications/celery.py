@@ -1,13 +1,14 @@
 from __future__ import annotations
 
 import datetime
+import traceback
 from typing import TYPE_CHECKING, Any, Callable, ClassVar, Sequence
 
-from celery import Celery
+from celery import Celery, beat
 from celery.app.task import Task as _Task
-from celery.result import AsyncResult
 from celery.schedules import crontab
 from celery.utils.log import get_task_logger
+from celery_sqlalchemy_scheduler.schedulers import DatabaseScheduler as _DatabaseScheduler
 from dependency_injector.wiring import Provide
 
 from notifications.core.config import CelerySettings, get_settings
@@ -15,6 +16,9 @@ from notifications.core.config import CelerySettings, get_settings
 from .containers import Container
 
 if TYPE_CHECKING:
+    from celery.beat import ScheduleEntry
+    from celery.result import AsyncResult
+
     from notifications.infrastructure.db.cache import BaseCache
 
     from .types import seconds
@@ -61,20 +65,20 @@ class Task(_Task):
         self.log.debug(f"[{lock_key}] has been acquired")
         return True
 
-    def delay(self, *args, force: bool = False, **kwargs) -> AsyncResult:
+    def delay(self, *args, force: bool = False, **kwargs) -> AsyncResult | None:
         if not self.lock_ttl or "chunk" in kwargs:
             return super().apply_async(args, kwargs)
         lock_key = self.get_lock_key(args, kwargs)
         if self.acquire_lock(lock_key, force=force):
             return super().apply_async(args, kwargs)
-        return AsyncResult(id="-1")
+        return None
 
     def apply_async(
         self,
         args: Sequence[Any] | None = None, kwargs: dict[str, Any] | None = None, *,
         force: bool = False,
         **options,
-    ) -> AsyncResult:
+    ) -> AsyncResult | None:
         if args is None:
             args = ()
         if kwargs is None:
@@ -84,7 +88,23 @@ class Task(_Task):
         lock_key = self.get_lock_key(args, kwargs)
         if self.acquire_lock(lock_key, force=force):
             return super().apply_async(args=args, kwargs=kwargs, **options)
-        return AsyncResult(id="-1")
+        return None
+
+
+class DatabaseScheduler(_DatabaseScheduler):
+    """Переопределенный Beat Scheduler для корректной обработки задач с локом."""
+
+    def apply_entry(self, entry: ScheduleEntry, producer=None) -> None:
+        beat.info("Scheduler: Sending due task %s (%s)", entry.name, entry.task)
+        try:
+            result = self.apply_async(entry, producer=producer, advance=False)
+        except Exception as exc:  # pylint: disable=broad-except
+            beat.error("Message Error: %s\n%s", exc, traceback.format_stack(), exc_info=True)
+        else:
+            if result is not None:
+                beat.debug("%s sent. id->%s", entry.task, result.id)
+            else:
+                beat.debug("Task %s is locked", entry.task)
 
 
 def create_celery() -> Celery:
