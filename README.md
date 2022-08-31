@@ -60,7 +60,7 @@ NN_DB_PASSWORD=netflix
 # Redis
 NN_REDIS_DECODE_RESPONSES=1
 NN_REDIS_PORT=6379
-NN_REDIS_URL=redis://redis-primary:6379/0
+NN_REDIS_URL=redis://redis-primary:6379/1
 NN_REDIS_OM_URL=redis://@redis-primary:6379
 # Celery
 NN_CELERY_BROKER_URL=redis://redis-celery:6379/0
@@ -139,7 +139,7 @@ NN_DB_PASSWORD=netflix
 # Redis
 NN_REDIS_DECODE_RESPONSES=1
 NN_REDIS_PORT=6379
-NN_REDIS_URL=redis://redis-primary:6379/0
+NN_REDIS_URL=redis://redis-primary:6379/1
 NN_REDIS_OM_URL=redis://@redis-primary:6379
 # Celery
 NN_CELERY_BROKER_URL=redis://redis-celery:6379/0

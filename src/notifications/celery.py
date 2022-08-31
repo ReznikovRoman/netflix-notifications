@@ -19,7 +19,7 @@ if TYPE_CHECKING:
     from celery.beat import ScheduleEntry
     from celery.result import AsyncResult
 
-    from notifications.infrastructure.db.cache import BaseCache
+    from notifications.infrastructure.db.cache import BaseSyncCache
 
     from .types import seconds
 
@@ -29,7 +29,7 @@ settings = get_settings()
 class Task(_Task):
     """Переопределенная Celery задача для установки лока."""
 
-    cache_client: BaseCache = Provide[Container.cache_client]
+    cache_client: BaseSyncCache = Provide[Container.sync_cache_client]
 
     # ttl лока в секундах
     lock_ttl: ClassVar[seconds | None] = None

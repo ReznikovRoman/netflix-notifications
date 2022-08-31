@@ -47,9 +47,19 @@ class Container(containers.DeclarativeContainer):
         db_url=config.DB_URL,
     )
 
-    redis_client = providers.Resource(
+    redis_connection = providers.Resource(
         redis.init_redis,
-        url=config.REDIS_OM_URL,
+        url=config.REDIS_URL,
+    )
+
+    redis_client = providers.Singleton(
+        redis.RedisClient,
+        redis_client=redis_connection,
+    )
+
+    cache_client = providers.Singleton(
+        cache.RedisCache,
+        redis_client=redis_client,
     )
 
     sync_redis_connection = providers.Resource(
@@ -58,12 +68,12 @@ class Container(containers.DeclarativeContainer):
     )
 
     sync_redis_client = providers.Singleton(
-        redis.RedisClient,
+        redis.SyncRedisClient,
         redis_client=sync_redis_connection,
     )
 
-    cache_client = providers.Resource(
-        cache.RedisCache,
+    sync_cache_client = providers.Singleton(
+        cache.SyncRedisCache,
         redis_client=sync_redis_client,
     )
 
