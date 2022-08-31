@@ -59,6 +59,7 @@ class Settings(BaseSettings):
     PROJECT_NAME: str
     DEBUG: bool = Field(False)
     PROJECT_BASE_URL: str
+    CACHE_HASHED_KEY_LENGTH: int = 10
 
     # Auth
     JWT_AUTH_SECRET_KEY: str = Field(env="NAA_SECRET_KEY")

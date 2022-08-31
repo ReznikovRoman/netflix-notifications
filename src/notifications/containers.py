@@ -8,7 +8,9 @@ from dependency_injector import containers, providers
 from notifications.core.config import get_settings
 from notifications.core.logging import configure_logger
 from notifications.domain import messages, periodic_tasks, templates
+from notifications.domain.factories import base_key_factory
 from notifications.infrastructure.db import cache, postgres, redis, repositories
+from notifications.infrastructure.db.cache import CacheKeyBuilder
 from notifications.infrastructure.emails.clients import ConsoleClient
 from notifications.infrastructure.emails.stubs import StreamStub
 from notifications.integrations.auth.stubs import NetflixAuthClientStub
@@ -47,9 +49,19 @@ class Container(containers.DeclarativeContainer):
         db_url=config.DB_URL,
     )
 
-    redis_client = providers.Resource(
+    redis_connection = providers.Resource(
         redis.init_redis,
-        url=config.REDIS_OM_URL,
+        url=config.REDIS_URL,
+    )
+
+    redis_client = providers.Singleton(
+        redis.RedisClient,
+        redis_client=redis_connection,
+    )
+
+    cache_client = providers.Singleton(
+        cache.RedisCache,
+        redis_client=redis_client,
     )
 
     sync_redis_connection = providers.Resource(
@@ -58,12 +70,12 @@ class Container(containers.DeclarativeContainer):
     )
 
     sync_redis_client = providers.Singleton(
-        redis.RedisClient,
+        redis.SyncRedisClient,
         redis_client=sync_redis_connection,
     )
 
-    cache_client = providers.Resource(
-        cache.RedisCache,
+    sync_cache_client = providers.Singleton(
+        cache.SyncRedisCache,
         redis_client=sync_redis_client,
     )
 
@@ -91,6 +103,15 @@ class Container(containers.DeclarativeContainer):
         NetflixUgcClientStub,
     )
 
+    # Domain -> Common
+
+    cache_key_builder = providers.Singleton(CacheKeyBuilder)
+    base_key_factory_ = providers.Callable(
+        base_key_factory,
+        key_builder=cache_key_builder,
+        min_length=config.CACHE_HASHED_KEY_LENGTH,
+    )
+
     # Domain -> Templates
 
     template_repository = providers.Singleton(
@@ -109,6 +130,8 @@ class Container(containers.DeclarativeContainer):
         messages.EmailNotificationService,
         email_client=email_client,
         template_service=template_service,
+        key_factory=base_key_factory_.provider,
+        cache_client=cache_client,
     )
 
     notification_dispatcher_service = providers.Singleton(
@@ -132,6 +155,8 @@ class Container(containers.DeclarativeContainer):
         template_service=template_service,
         auth_client=auth_client,
         ugc_client=ugc_client,
+        key_factory=base_key_factory_.provider,
+        cache_client=cache_client,
     )
 
 

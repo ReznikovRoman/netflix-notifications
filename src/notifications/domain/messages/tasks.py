@@ -31,12 +31,12 @@ if TYPE_CHECKING:
 async def send_email(
     self: Task,
     notification: NotificationPayload, *args,
+    force: bool = False,
     email_service: EmailNotificationService = Provide[Container.email_notification_service],
     **kwargs,
 ) -> None:
     """Фоновая задача по отправке уведомления на почту."""
-    # TODO [Дипломный проект]: Сделать задачу идемпотентной -> сохранять информацию об отправке уведомления
-    await email_service.send_message(notification)
+    await email_service.send_message_idempotently(notification, force=force)
     self.log.info("Notification has been sent.")
 
 

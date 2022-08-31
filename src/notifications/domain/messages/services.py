@@ -1,20 +1,40 @@
+from __future__ import annotations
+
+import datetime
+import logging
 from abc import ABC, abstractmethod
-from typing import Any
+from typing import TYPE_CHECKING, Any, Callable, ClassVar
 
 from notifications.domain.templates import TemplateService
+from notifications.infrastructure.db.cache import BaseCache
 from notifications.infrastructure.emails.clients import BaseEmailClient, EmailMessageDetail
 
 from .types import NotificationPayload
 
+if TYPE_CHECKING:
+    from notifications.types import seconds
+
 
 class BaseNotificationService(ABC):
     """Базовый сервис по отправке уведомлений."""
+
+    DEFAULT_NOTIFICATION_LOCK: ClassVar[seconds | datetime.timedelta]
 
     _template_service: TemplateService
 
     @abstractmethod
     async def send_message(self, message_payload: NotificationPayload, /) -> int:
         """Отправка уведомления пользователю."""
+
+    @abstractmethod
+    async def send_message_idempotently(
+        self, message_payload: NotificationPayload, /, *, ttl: seconds | datetime.timedelta | None = None,
+    ) -> int:
+        """Идемпотентная отправка уведомления пользователю.
+
+        Пользователю не может отправиться уведомление с одинаковым заголовком из `message_payload`
+        в течение `ttl` или `DEFAULT_NOTIFICATION_LOCK`.
+        """
 
     @abstractmethod
     async def build_message_from_payload(self, payload: NotificationPayload, /) -> EmailMessageDetail:
@@ -37,16 +57,50 @@ class BaseNotificationService(ABC):
 class EmailNotificationService(BaseNotificationService):
     """Сервис по отправке уведомлений на почту."""
 
-    def __init__(self, email_client: BaseEmailClient, template_service: TemplateService) -> None:
+    DEFAULT_NOTIFICATION_LOCK = datetime.timedelta(hours=1)
+
+    def __init__(
+        self,
+        email_client: BaseEmailClient, template_service: TemplateService,
+        key_factory: Callable[..., str], cache_client: BaseCache,
+    ) -> None:
         assert isinstance(email_client, BaseEmailClient)
         self._email_client = email_client
 
         assert isinstance(template_service, TemplateService)
         self._template_service = template_service
 
+        assert callable(key_factory)
+        self._key_factory = key_factory
+
+        assert isinstance(cache_client, BaseCache)
+        self._cache_client = cache_client
+
     async def send_message(self, message_payload: NotificationPayload, /) -> int:
         message = await self.build_message_from_payload(message_payload)
         return self._email_client.send_messages((message,))
+
+    async def send_message_idempotently(
+        self, message_payload: NotificationPayload, /, *,
+        ttl: seconds | datetime.timedelta | None = None,
+        force: bool = False,
+    ) -> int:
+        if not message_payload["recipient_list"]:
+            return 0
+        if ttl is None:
+            ttl = self.DEFAULT_NOTIFICATION_LOCK
+        subject = message_payload["subject"]
+        email = message_payload["recipient_list"][0]
+        key = self._key_factory(base_key=subject, prefix=f"messages:template:{email}:")
+        if force:
+            logging.debug(f"force=True, ignoring [{key}]")
+            await self._cache_client.set(key, email, ttl=ttl)
+            return await self.send_message(message_payload)
+        elif not await self._cache_client.set(key, email, ttl=ttl, create_missing=False):
+            logging.debug(f"[{key}] is locked. Email has been already sent.")
+            return 0
+        logging.debug(f"[{key}] has been acquired")
+        return await self.send_message(message_payload)
 
     async def build_message_from_payload(self, payload: NotificationPayload, /) -> EmailMessageDetail:
         content = await self._get_message_content_from_payload(payload)
