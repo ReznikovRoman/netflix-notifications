@@ -51,7 +51,7 @@ class BaseNotificationService(ABC):
     async def _get_template_content_by_slug(self, slug: str, /, *, context: dict[str, Any]) -> str:
         """Получение текста сообщения после рендера шаблона."""
         template = await self._template_service.get_by_slug(slug)
-        return self._template_service.render_template_from_string(template.content, context=context)
+        return await self._template_service.render_template_from_string(template.content, context=context)
 
 
 class EmailNotificationService(BaseNotificationService):

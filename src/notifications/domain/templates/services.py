@@ -21,7 +21,7 @@ class TemplateService:
     async def create_new(self, template: Template) -> Template:
         """Создание нового шаблона уведомления."""
         self._validate_slug(template.slug)
-        self.validate_content(template.content)
+        await self.validate_content(template.content)
         return await self._template_repository.create(template)
 
     async def create_default_template(self, name: str, slug: str, filename: str) -> Template:
@@ -47,7 +47,7 @@ class TemplateService:
         """Обновление шаблона по его слагу."""
         self._validate_slug(slug)
         if updated_content := updated_template.content:
-            self.validate_content(updated_content)
+            await self.validate_content(updated_content)
         fields_to_update = updated_template.dict(exclude_none=True)
         return await self._template_repository.update_fields_by_slug(slug, update_fields=fields_to_update)
 
@@ -63,19 +63,21 @@ class TemplateService:
             return file.read()
 
     @staticmethod
-    def render_template_from_string(content: str, *, context: dict[str, Any]) -> str:
+    async def render_template_from_string(content: str, *, context: dict[str, Any]) -> str:
         """Рендеринг шаблона/строки с помощью переданного контекста."""
-        rendered_template = Environment(loader=BaseLoader()).from_string(content).render(**context)
+        rendered_template = (
+            await Environment(loader=BaseLoader(), enable_async=True).from_string(content).render_async(**context)
+        )
         return rendered_template
 
     @staticmethod
-    def validate_content(content: str, /) -> None:
+    async def validate_content(content: str, /) -> None:
         """Валидация содержимого шаблона.
 
         Проверка на совместимость с Jinja2.
         """
         try:
-            Environment(loader=BaseLoader()).from_string(content).render()
+            await Environment(loader=BaseLoader(), enable_async=True).from_string(content).render_async()
         except TemplateSyntaxError:
             raise InvalidTemplateContentError()
 
