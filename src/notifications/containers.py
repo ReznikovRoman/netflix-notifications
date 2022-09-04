@@ -8,9 +8,7 @@ from dependency_injector import containers, providers
 from notifications.core.config import get_settings
 from notifications.core.logging import configure_logger
 from notifications.domain import messages, periodic_tasks, templates
-from notifications.domain.factories import base_key_factory
 from notifications.infrastructure.db import cache, postgres, redis, repositories
-from notifications.infrastructure.db.cache import CacheKeyBuilder
 from notifications.infrastructure.emails.clients import ConsoleClient
 from notifications.infrastructure.emails.stubs import StreamStub
 from notifications.integrations.auth.stubs import NetflixAuthClientStub
@@ -103,15 +101,6 @@ class Container(containers.DeclarativeContainer):
         NetflixUgcClientStub,
     )
 
-    # Domain -> Common
-
-    cache_key_builder = providers.Singleton(CacheKeyBuilder)
-    base_key_factory_ = providers.Callable(
-        base_key_factory,
-        key_builder=cache_key_builder,
-        min_length=config.CACHE_HASHED_KEY_LENGTH,
-    )
-
     # Domain -> Templates
 
     template_repository = providers.Singleton(
@@ -130,8 +119,6 @@ class Container(containers.DeclarativeContainer):
         messages.EmailNotificationService,
         email_client=email_client,
         template_service=template_service,
-        key_factory=base_key_factory_.provider,
-        cache_client=cache_client,
     )
 
     notification_dispatcher_service = providers.Singleton(
@@ -155,8 +142,6 @@ class Container(containers.DeclarativeContainer):
         template_service=template_service,
         auth_client=auth_client,
         ugc_client=ugc_client,
-        key_factory=base_key_factory_.provider,
-        cache_client=cache_client,
     )
 
 

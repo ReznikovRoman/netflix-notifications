@@ -25,18 +25,19 @@ if TYPE_CHECKING:
     default_retry_delay=5,
     autoretry_for=(SoftTimeLimitExceeded,),
     expires=datetime.datetime.now(TZ_MOSCOW) + datetime.timedelta(hours=12),
+    lock_ttl=5 * 60,
+    lock_suffix=lambda notification: ("email", notification["recipient_list"][0], "subject", notification["subject"]),
 )
 @sync_task
 @inject
 async def send_email(
     self: Task,
     notification: NotificationPayload, *args,
-    force: bool = False,
     email_service: EmailNotificationService = Provide[Container.email_notification_service],
     **kwargs,
 ) -> None:
     """Фоновая задача по отправке уведомления на почту."""
-    await email_service.send_message_idempotently(notification, force=force)
+    await email_service.send_message(notification)
     self.log.info("Notification has been sent.")
 
 

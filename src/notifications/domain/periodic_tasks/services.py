@@ -1,19 +1,15 @@
 import dataclasses
-import datetime
-import logging
 import uuid
-from typing import Callable, ClassVar
 
 from notifications.core.config import CeleryQueue
 from notifications.domain.messages import EmailNotificationService
 from notifications.domain.messages.types import NotificationPayload
 from notifications.domain.templates import TemplateService
-from notifications.infrastructure.db.cache import BaseCache
 from notifications.integrations.auth import NetflixAuthClient
 from notifications.integrations.auth.types import BoundaryRegistrationDate, UserDetail
 from notifications.integrations.ugc import NetflixUgcClient
 
-from .enums import DefaultTemplateSlugs
+from .enums import DefaultTemplateSlugs, NotificationSubject
 from .exceptions import UnknownCeleryTaskError
 from .repositories import TaskRepository
 from .types import CeleryPeriodicTask, CeleryTask
@@ -23,16 +19,11 @@ from .types import CeleryPeriodicTask, CeleryTask
 class TaskService:
     """Сервис для работы с периодическими Celery задачами."""
 
-    DEFAULT_DIGEST_LOCK: ClassVar[datetime.timedelta] = datetime.timedelta(hours=1)
-
     task_repository: TaskRepository
     email_service: EmailNotificationService
     template_service: TemplateService
     auth_client: NetflixAuthClient
     ugc_client: NetflixUgcClient
-
-    key_factory: Callable[..., str]
-    cache_client: BaseCache
 
     def get_all_registered(self) -> list[CeleryTask]:
         """Получение списка Celery задач для отображения в панели администратора."""
@@ -73,20 +64,7 @@ class TaskService:
     async def send_digest_email_to_subscriber(self, user_data: UserDetail, /) -> None:
         """Отправка еженедельного дайджеста одному пользователю."""
         message_payload = self._build_digest_payload(user_data)
-        await self._send_message_idempotently(message_payload)
-
-    async def _send_message_idempotently(self, message_payload: NotificationPayload, /) -> None:
-        """Идемпотентная отправка сообщения на почту.
-
-        Пользователю не может отправиться уведомление с одинаковым заголовком в течение `DEFAULT_DIGEST_LOCK`.
-        """
-        subject = message_payload["subject"]
-        email = message_payload["recipient_list"][0]
-        key = self.key_factory(base_key=subject, prefix=f"periodic:digest:{email}:")
-        if await self.cache_client.set(key, email, ttl=self.DEFAULT_DIGEST_LOCK, create_missing=False):
-            await self.email_service.send_message(message_payload)
-            return
-        logging.info(f"[{key}] is locked. Email has been already sent.")
+        await self.email_service.send_message(message_payload)
 
     async def _create_default_digest_template(self) -> None:
         """Создание шаблона уведомления для дайджеста."""
@@ -96,7 +74,7 @@ class TaskService:
     def _build_digest_payload(self, user_data: UserDetail, /) -> NotificationPayload:
         """Формирование данных дайджеста для письма."""
         payload = NotificationPayload(
-            subject="Еженедельный дайджест",
+            subject=NotificationSubject.WEEKLY_DIGEST.value,
             recipient_list=[user_data.email],
             template_slug=DefaultTemplateSlugs.WEEKLY_DIGEST.value,
             context={

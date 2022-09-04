@@ -16,6 +16,7 @@ from notifications.integrations.auth.enums import DefaultRoles
 from notifications.integrations.auth.types import BoundaryRegistrationDate, UserDetail
 
 from .constants import PERIODIC_TASK_PREFIX
+from .enums import NotificationSubject
 from .types import UserPayload
 
 if TYPE_CHECKING:
@@ -58,6 +59,10 @@ get_subscribers_initial_chunk = partial(get_users_initial_chunk, user_role=Defau
     default_retry_delay=5,
     autoretry_for=(SoftTimeLimitExceeded,),
     expires=datetime.datetime.now(TZ_MOSCOW) + datetime.timedelta(hours=12),
+    lock_ttl=12 * 60 * 60,
+    lock_suffix=(
+        lambda user_payload: ("email", user_payload["email"], "subject", NotificationSubject.WEEKLY_DIGEST.value)
+    ),
 )
 @sync_task
 @inject
