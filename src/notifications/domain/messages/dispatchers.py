@@ -3,7 +3,7 @@ from notifications.core.config import CeleryQueue
 from notifications.domain.templates import TemplateService
 
 from .enums import NotificationPriority, NotificationType
-from .exceptions import InvalidNotificationTypeError
+from .exceptions import InvalidNotificationTypeError, NotificationCooldownError
 from .services import EmailNotificationService
 from .types import NotificationPayload, Queue
 
@@ -31,6 +31,8 @@ class NotificationDispatcherService:
                 result = send_email.apply_async(args=[self._build_payload(notification)], queue=queue)
             case _:
                 raise InvalidNotificationTypeError(message=f"Invalid notification type <{notification_type}>")
+        if result is None:
+            raise NotificationCooldownError()
         return NotificationShortDetails(notification_id=result.id, queue=queue)
 
     async def check_if_template_exists(self, template_slug: str, /) -> None:

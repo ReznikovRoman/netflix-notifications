@@ -25,6 +25,8 @@ if TYPE_CHECKING:
     default_retry_delay=5,
     autoretry_for=(SoftTimeLimitExceeded,),
     expires=datetime.datetime.now(TZ_MOSCOW) + datetime.timedelta(hours=12),
+    lock_ttl=5 * 60,
+    lock_suffix=lambda notification: ("email", notification["recipient_list"][0], "subject", notification["subject"]),
 )
 @sync_task
 @inject
