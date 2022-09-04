@@ -77,12 +77,15 @@ class Task(_Task):
         self,
         args: Sequence[Any] | None = None, kwargs: dict[str, Any] | None = None, *,
         force: bool = False,
+        lock_ttl: seconds | None = None,
         **options,
     ) -> AsyncResult | None:
         if args is None:
             args = ()
         if kwargs is None:
             kwargs = {}
+        if lock_ttl is not None:
+            self.lock_ttl = lock_ttl
         if not self.lock_ttl or "chunk" in kwargs:
             return super().apply_async(args=args, kwargs=kwargs, **options)
         lock_key = self.get_lock_key(args, kwargs)
