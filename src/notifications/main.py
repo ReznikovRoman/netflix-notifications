@@ -3,11 +3,11 @@ import logging
 from fastapi import FastAPI, Request
 from fastapi.responses import ORJSONResponse
 
+from notifications.api.urls import api_router
+from notifications.common.exceptions import NetflixNotificationsError
 from notifications.core.config import get_settings
 
-from .api.urls import api_router
 from .celery import create_celery
-from .common.exceptions import NetflixNotificationsError
 from .containers import Container, inject_celery_app, override_providers
 
 settings = get_settings()
